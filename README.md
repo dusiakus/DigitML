@@ -1,4 +1,4 @@
-# DigitML
+# Kloczkov Denis KS-40
 
 Training a feed-forward neural network with gradient descent and back-propogation to recognize handwritten digits. 
 
