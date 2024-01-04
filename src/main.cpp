@@ -6,17 +6,17 @@
 #include <iostream>
 
 void debug(Example e) {
-    static std::string shades = " .:-=+*#%@";
-    for (unsigned int i = 0; i < 28 * 28; i++) {
-        if (i % 28 == 0) printf("\n");
-        printf("%c", shades[e.data[i] / 30]);
-    }
-    printf("\nLabel: %d\n", e.label);
+  static std::string shades = " .:-=+*#%@";
+  for (unsigned int i = 0; i < 28 * 28; i++) {
+    if (i % 28 == 0) printf("\n");
+    printf("%c", shades[e.data[i] / 30]);
+  }
+  printf("\nLabel: %d\n", e.label);
 }
 
 std::vector<double> load_matrix(Example& e) {
-    std::vector<double> result(e.data, e.data + 28 * 28);
-    return result;
+  std::vector<double> result(e.data, e.data + 28 * 28);
+  return result;
 }
 
 const double calculate_accuracy(const Matrix<unsigned char>& images, const Matrix<unsigned char>& labels, NeuralNetwork n) {
@@ -24,55 +24,109 @@ const double calculate_accuracy(const Matrix<unsigned char>& images, const Matri
   for (unsigned int i = 0; i < images.rows(); ++i) {
     Example e;
     for (int j = 0; j < 28*28; ++j) {
-        e.data[j] = images[i][j];
+      e.data[j] = images[i][j];
     }
     e.label = labels[i][0];
     unsigned int guess = n.compute(e);
     if (guess == (unsigned int)e.label) correct++;
   }
   const double accuracy = (double)correct/images.rows();
-
   return accuracy;
 }
 
-int main() {
+void tests(int count) {
+  double sum_train = 0;
+  double sum_test = 0;
+  for(int i = 0; i <= count; i++) {
     Matrix<unsigned char> images_train(0, 0);
     Matrix<unsigned char> labels_train(0, 0);
     load_dataset(images_train, labels_train, "data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte");
-
+   
     Matrix<unsigned char> images_test(0, 0);
     Matrix<unsigned char> labels_test(0, 0);
     load_dataset(images_test, labels_test, "data/t10k-images-idx3-ubyte", "data/t10k-labels-idx1-ubyte");
 
     NeuralNetwork n;
 
-    // Tests to see that data was read in properly
-    /*for (int i = 0; i < 10; ++i) {
-        Example e;
-        for (int j = 0; j < 28*28; ++j) {
-            e.data[j] = images_train[i][j];
-        }
-        e.label = labels_train[i][0];
-        debug(e);
-        printf("Guess: %d\n", n.compute(e));
-    }
-    for (int i = 0; i < 10; ++i) {
-        Example e;
-        for (int j = 0; j < 28*28; ++j) {
-            e.data[j] = images_test[i][j];
-        }
-        e.label = labels_test[i][0];
-        debug(e);
-        printf("Guess: %d\n", n.compute(e));
-    }*/
     const unsigned int num_iterations = 5;
     n.train(num_iterations, images_train, labels_train);
 
     const double accuracy_train = calculate_accuracy(images_train, labels_train, n);
     const double accuracy_test = calculate_accuracy(images_test, labels_test, n);
-
+        
+    sum_train += accuracy_train;
+    sum_test += accuracy_test;
+        
     printf("Accuracy on training data: %f\n", accuracy_train);
     printf("Accuracy on test data: %f\n", accuracy_test);
+  };
+    
+  printf(" ----------------------------------------\n Average accuracy of train data: %f\n", sum_train/count);
+  printf(" Average accuracy of test data: %f\n", sum_test/count);
+}
 
-    return 0;
+#ifdef TESTS
+#include "gtest/gtest.h"
+
+double isru(double a, double alpha = 1.0) {
+  return a / sqrt(1 + alpha * a * a);
+}
+
+std::vector<double> isrusign(const std::vector<double>& x, double alpha = 1.0) {
+  std::vector<double> result(x.size());
+  for (unsigned int i = 0; i < x.size(); i++)
+    result[i] = isru(x[i], alpha);
+  return result;
+}
+
+TEST(FunctionTesting, testIsruLargeAlpha) {
+  double alpha = 3.0;
+  EXPECT_NEAR(isru(1.8, alpha), 1.8, 1e-2);
+  EXPECT_NEAR(isru(-1.5, alpha), -0.538818, 1e-2);
+  EXPECT_NEAR(isru(0.7, alpha), 0.7, 1e-2);
+}
+
+TEST(FunctionTesting, testIsruPositive) {
+  double alpha = 0.5;
+  EXPECT_NEAR(isru(1.8, alpha), 1.8, 1e-2);
+  EXPECT_NEAR(isru(0.2, alpha), 0.2, 1e-2);
+  EXPECT_NEAR(isru(0.56, alpha), 0.56, 1e-2);
+}
+
+TEST(FunctionTesting, testIsruZero) {
+  double alpha = 0.5;
+  EXPECT_NEAR(isru(0, alpha), 0, 1e-2);
+  EXPECT_NEAR(isru(0.1, alpha), 0.1, 1e-2);
+  EXPECT_NEAR(isru(0.0, alpha), 0.0, 1e-2);
+}
+
+TEST(FunctionTesting, testIsruMixed) {
+  double alpha = 0.5;
+  std::vector<double> x = {0.5, -0.4, -0.33, 0.1, -0.92};
+  std::vector<double> result = isrusign(x, alpha);
+   
+  std::vector<double> expected = {0.5, -0.3849, -0.3213, 0.1, -0.771178};
+  for (unsigned int i = 0; i < result.size(); i++) {
+    EXPECT_NEAR(result[i], expected[i], 1e-2);
+  }
+}
+
+TEST(FunctionTesting, testIsruZeroVector) {
+  double alpha = 0.5;
+  std::vector<double> x = {0.0, 0.0, 0.0, 0.0, 0.0};
+  std::vector<double> result = isrusign(x, alpha);
+  
+  std::vector<double> expected = {0.0, 0.0, 0.0, 0.0, 0.0};
+  EXPECT_EQ(result, expected);
+}
+
+#endif //TESTS
+
+int main(int argc, char **argv) {
+  tests(6);
+  #ifdef TESTS
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+  #endif
+  return 0;
 }
