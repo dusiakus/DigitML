@@ -83,14 +83,14 @@ TEST(FunctionTesting, testIsruLargeAlpha) {
   double alpha = 3.0;
   EXPECT_NEAR(isru(1.8, alpha), 0.55, 1e-2);
   EXPECT_NEAR(isru(-1.5, alpha), -0.538818, 1e-2);
-  EXPECT_NEAR(isru(0.7, alpha), 0.55, 1e-2);
+  EXPECT_NEAR(isru(0.7, alpha), 0.45, 1e-2);
 }
 
 TEST(FunctionTesting, testIsruPositive) {
   double alpha = 0.5;
-  EXPECT_NEAR(isru(1.8, alpha), 1.8, 1e-2);
+  EXPECT_NEAR(isru(1.8, alpha), 1.11, 1e-2);
   EXPECT_NEAR(isru(0.2, alpha), 0.2, 1e-2);
-  EXPECT_NEAR(isru(0.56, alpha), 0.56, 1e-2);
+  EXPECT_NEAR(isru(0.56, alpha), 0.52, 1e-2);
 }
 
 TEST(FunctionTesting, testIsruZero) {
@@ -105,7 +105,7 @@ TEST(FunctionTesting, testIsruMixed) {
   std::vector<double> x = {0.5, -0.4, -0.33, 0.1, -0.92};
   std::vector<double> result = isrusign(x, alpha);
    
-  std::vector<double> expected = {0.5, -0.3849, -0.3213, 0.1, -0.771178};
+  std::vector<double> expected = {0.47, -0.3849, -0.3213, 0.1, -0.771178};
   for (unsigned int i = 0; i < result.size(); i++) {
     EXPECT_NEAR(result[i], expected[i], 1e-2);
   }
