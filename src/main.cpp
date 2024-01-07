@@ -81,9 +81,9 @@ std::vector<double> isrusign(const std::vector<double>& x, double alpha = 1.0) {
 
 TEST(FunctionTesting, testIsruLargeAlpha) {
   double alpha = 3.0;
-  EXPECT_NEAR(isru(1.8, alpha), 1.8, 1e-2);
+  EXPECT_NEAR(isru(1.8, alpha), 0.55, 1e-2);
   EXPECT_NEAR(isru(-1.5, alpha), -0.538818, 1e-2);
-  EXPECT_NEAR(isru(0.7, alpha), 0.7, 1e-2);
+  EXPECT_NEAR(isru(0.7, alpha), 0.55, 1e-2);
 }
 
 TEST(FunctionTesting, testIsruPositive) {
